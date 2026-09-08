@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "day-unfolded"
+version = "0.1.0"
+description = "Multi-source day-in-the-life location timeline framework"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.6",
+    "tzdata>=2024.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+api = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/day_unfolded"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

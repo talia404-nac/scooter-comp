@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>יום בחיים של קורקינט — שחזור ציר זמן מיקומים</title>
+<style>
+  :root {
+    color-scheme: dark;
+
+    /* base surfaces */
+    --bg: #17151a;
+    --panel: #201c24;
+    --panel-raised: #2a242c;
+    --border: #3a333c;
+    --border-soft: #2c2730;
+
+    /* text */
+    --text: #f3efe9;
+    --muted: #aba098;
+    --faint: #756c6f;
+
+    /* the day-arc: night -> dawn -> midday -> dusk -> night */
+    --night: #1b2244;
+    --dawn: #e8735a;
+    --midday: #6fb1e8;
+    --dusk: #8b5fbf;
+
+    /* action + status */
+    --action-a: #e8735a;
+    --action-b: #8b5fbf;
+    --danger: #d9614f;
+    --danger-bg: rgba(217, 97, 79, 0.12);
+
+    --radius: 14px;
+    --radius-sm: 9px;
+  }
+
+  * { box-sizing: border-box; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  html { background: var(--bg); }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Assistant", "Segoe UI Variable", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+    background:
+      radial-gradient(1200px 500px at 20% -10%, rgba(139, 95, 191, 0.14), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(232, 115, 90, 0.10), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 64px;
+  }
+
+  main {
+    width: 100%;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead { position: relative; }
+
+  .stamp {
+    position: absolute;
+    inset-inline-end: -6px;
+    top: -14px;
+    transform: rotate(-7deg);
+    border: 2px solid #b8695a;
+    border-radius: 6px;
+    color: #d98a7a;
+    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    padding: 4px 8px;
+    line-height: 1.3;
+    text-align: center;
+    opacity: 0.85;
+    box-shadow: inset 0 0 0 1px rgba(184, 105, 90, 0.35);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .eyebrow {
+    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 6px;
+  }
+
+  h1 {
+    font-family: "Rubik", "Segoe UI Variable", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+    font-size: clamp(1.4rem, 1.05rem + 1.6vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 18px;
+    max-width: 22ch;
+  }
+
+  .dayarc { direction: ltr; }
+
+  .dayarc-track {
+    height: 10px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--night) 0%, var(--dawn) 25%, var(--midday) 50%, var(--dusk) 75%, var(--night) 100%);
+    position: relative;
+    overflow: visible;
+  }
+
+  .dayarc-range {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    outline: 1.5px solid rgba(255, 255, 255, 0.55);
+    transition: left 0.5s ease, width 0.5s ease, opacity 0.3s ease;
+    opacity: 0;
+  }
+  .dayarc-range.visible { opacity: 1; }
+
+  .dayarc-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
+    font-size: 0.68rem;
+    color: var(--faint);
+    margin-top: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- form card ---------- */
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .card-eyebrow {
+    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: var(--faint);
+    margin: 0 0 14px;
+  }
+
+  form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  form .full { grid-column: 1 / -1; }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  input {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--panel-raised);
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  input:focus-visible {
+    outline: 2px solid var(--midday);
+    outline-offset: 1px;
+    border-color: transparent;
+  }
+
+  button {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+    padding: 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--action-a), var(--action-b));
+    color: #201227;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+  button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px -8px rgba(139, 95, 191, 0.55); }
+  button:focus-visible { outline: 2px solid var(--midday); outline-offset: 2px; }
+  button:disabled { opacity: 0.55; cursor: default; transform: none; box-shadow: none; }
+
+  @media (max-width: 520px) {
+    form { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- results ---------- */
+
+  #results { display: flex; flex-direction: column; gap: 18px; }
+
+  .results-heading {
+    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--faint);
+    margin: 4px 0 0;
+  }
+
+  .timeline {
+    position: relative;
+    padding-inline-start: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 9px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: var(--spine, var(--border));
+    border-radius: 2px;
+  }
+
+  .event {
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    animation: rise 0.4s ease both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .event .marker {
+    position: absolute;
+    inset-inline-start: -30px;
+    top: 16px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--marker, var(--faint));
+    box-shadow: 0 0 0 3px var(--panel);
+  }
+  .event .marker.hollow {
+    background: transparent;
+    border: 2px dashed var(--faint);
+  }
+  .event .marker.arrow {
+    border-radius: 3px;
+    background: transparent;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--marker, var(--midday));
+    font-size: 0.9rem;
+    transform-origin: center;
+  }
+  .event .marker.conflict {
+    border-radius: 3px;
+    transform: rotate(45deg);
+    background: var(--danger);
+  }
+
+  .event .time {
+    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+
+  .event .desc {
+    margin-top: 4px;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .pills { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill {
+    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 9px;
+  }
+
+  .event.conflict-card { border-color: rgba(217, 97, 79, 0.4); }
+  .event.gap-card { background: transparent; border-style: dashed; }
+  .event.gap-card .desc { color: var(--muted); }
+
+  .empty-state, .error-state {
+    border-radius: var(--radius);
+    padding: 22px;
+    text-align: center;
+    font-size: 0.95rem;
+  }
+  .empty-state {
+    background: var(--panel);
+    border: 1px dashed var(--border);
+    color: var(--muted);
+  }
+  .error-state {
+    background: var(--danger-bg);
+    border: 1px solid rgba(217, 97, 79, 0.4);
+    color: #f0c3ba;
+    text-align: start;
+  }
+
+  details.tech {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: 0.75rem;
+  }
+  details.tech summary {
+    cursor: pointer;
+    color: var(--faint);
+    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
+    letter-spacing: 0.02em;
+  }
+  details.tech pre {
+    margin-top: 8px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--muted);
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    max-height: 320px;
+    overflow: auto;
+  }
+
+  footer.disclosure {
+    font-size: 0.72rem;
+    color: var(--faint);
+    line-height: 1.6;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 14px;
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <div class="masthead">
+    <div class="stamp">טיוטה<br />נתוני הדגמה</div>
+    <p class="eyebrow">מעקב צי קורקינטים · DAY UNFOLDED</p>
+    <h1>יום בחיים של קורקינט: שחזור ציר זמן מיקומים</h1>
+    <div class="dayarc" dir="ltr">
+      <div class="dayarc-track" id="dayarcTrack">
+        <div class="dayarc-range" id="dayarcRange"></div>
+      </div>
+      <div class="dayarc-ticks"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+    </div>
+  </div>
+
+  <section class="card">
+    <p class="card-eyebrow">בקשת שחזור</p>
+    <form id="form">
+      <label class="full">מזהה קורקינט
+        <input id="scooter_id" value="SCT-4471" required />
+      </label>
+      <label>תאריך
+        <input id="date" type="date" required />
+      </label>
+      <label>&nbsp;</label>
+      <label>משעה
+        <input id="start_time" type="time" value="09:00" required />
+      </label>
+      <label>עד שעה
+        <input id="end_time" type="time" value="18:00" required />
+      </label>
+      <button type="submit" id="submit">שחזר ציר זמן</button>
+    </form>
+  </section>
+
+  <section id="results"></section>
+
+  <footer class="disclosure">
+    המקור המחובר כרגע (DEMO_SOURCE) הוא נתון מלאכותי לצורך בדיקת המערכת בלבד ואינו מקור מידע אמיתי.
+    ניסוח הטקסט מיוצר במנוע תבניות דטרמיניסטי, לא במודל שפה.
+  </footer>
+
+</main>
+
+<script>
+  const TIMEZONE = "Asia/Jerusalem";
+
+  // The day-arc: fixed reference stops used both for the masthead gradient
+  // (built in CSS) and for coloring every timeline marker/spine by the
+  // actual time of day it represents — color here encodes data, not decoration.
+  const DAY_STOPS = [
+    { h: 0, c: [27, 34, 68] },
+    { h: 6, c: [232, 115, 90] },
+    { h: 12, c: [111, 177, 232] },
+    { h: 18, c: [139, 95, 191] },
+    { h: 24, c: [27, 34, 68] },
+  ];
+
+  function colorForHour(hour) {
+    const h = ((hour % 24) + 24) % 24;
+    for (let i = 0; i < DAY_STOPS.length - 1; i++) {
+      const a = DAY_STOPS[i], b = DAY_STOPS[i + 1];
+      if (h >= a.h && h <= b.h) {
+        const t = (h - a.h) / (b.h - a.h);
+        const c = a.c.map((v, idx) => Math.round(v + (b.c[idx] - v) * t));
+        return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+      }
+    }
+    return `rgb(${DAY_STOPS[0].c.join(", ")})`;
+  }
+
+  function hourFraction(hhmm) {
+    const [h, m] = hhmm.split(":").map(Number);
+    return h + m / 60;
+  }
+
+  const DIRECTION_DEG = { N: 0, NE: 45, E: 90, SE: 135, S: 180, SW: 225, W: 270, NW: 315 };
+  const DIRECTION_HE = {
+    N: "צפון", NE: "צפון מזרח", E: "מזרח", SE: "דרום מזרח",
+    S: "דרום", SW: "דרום מערב", W: "מערב", NW: "צפון מערב",
+  };
+
+  const form = document.getElementById("form");
+  const results = document.getElementById("results");
+  const submitBtn = document.getElementById("submit");
+  const dayarcRange = document.getElementById("dayarcRange");
+
+  document.getElementById("date").valueAsDate = new Date();
+
+  function fmt(iso) {
+    return iso.slice(11, 16);
+  }
+
+  function clear(el) { el.innerHTML = ""; }
+
+  function renderEmpty() {
+    const div = document.createElement("div");
+    div.className = "empty-state";
+    div.textContent = "לא נמצא מידע על הקורקינט המבוקש בטווח הזמן הזה.";
+    results.appendChild(div);
+  }
+
+  function renderError(message) {
+    const div = document.createElement("div");
+    div.className = "error-state";
+    div.textContent = message;
+    results.appendChild(div);
+  }
+
+  function buildEvents(structured) {
+    const events = [];
+    for (const s of structured.segments) {
+      events.push({ type: "segment", start: s.start_time, end: s.end_time, data: s });
+    }
+    for (const g of structured.gaps) {
+      events.push({ type: "gap", start: g.start_time, end: g.end_time, data: g });
+    }
+    for (const c of structured.conflicts) {
+      events.push({ type: "conflict", start: c.start_time, end: c.end_time, data: c });
+    }
+    events.sort((a, b) => a.start.localeCompare(b.start));
+    return events;
+  }
+
+  function eventCard(event, index) {
+    const el = document.createElement("div");
+    el.className = "event";
+    el.style.setProperty("--i", index);
+
+    const marker = document.createElement("div");
+    marker.className = "marker";
+
+    const time = document.createElement("div");
+    time.className = "time";
+
+    const desc = document.createElement("div");
+    desc.className = "desc";
+
+    const startH = hourFraction(fmt(event.start));
+
+    if (event.type === "gap") {
+      el.classList.add("gap-card");
+      marker.classList.add("hollow");
+      time.textContent = `${fmt(event.start)}–${fmt(event.end)}`;
+      desc.textContent = "אין מידע מספיק לקבוע את מיקומו.";
+    } else if (event.type === "conflict") {
+      el.classList.add("conflict-card");
+      marker.classList.add("conflict");
+      time.textContent = fmt(event.start);
+      desc.textContent = "נמצאו מיקומים סותרים בין מקורות שונים — לא נבחר ביניהם.";
+      const pills = document.createElement("div");
+      pills.className = "pills";
+      for (const o of event.data.observations) {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        pill.textContent = `${o.source_id} · ${o.latitude.toFixed(4)}, ${o.longitude.toFixed(4)}`;
+        pills.appendChild(pill);
+      }
+      el.append(marker, time, desc, pills);
+      return el;
+    } else {
+      const seg = event.data;
+      const color = colorForHour(startH);
+      marker.style.setProperty("--marker", color);
+      time.textContent = `${fmt(event.start)}–${fmt(event.end)}`;
+
+      if (seg.state === "moving") {
+        marker.classList.add("arrow");
+        marker.textContent = "▲";
+        marker.style.transform = `rotate(${DIRECTION_DEG[seg.direction] ?? 0}deg)`;
+        desc.textContent = `בתנועה לכיוון ${DIRECTION_HE[seg.direction] ?? seg.direction ?? ""}`;
+      } else if (seg.representative_latitude != null) {
+        desc.textContent = `נמצא באזור (${seg.representative_latitude.toFixed(4)}, ${seg.representative_longitude.toFixed(4)})`;
+      } else {
+        desc.textContent = "מיקום לא ידוע";
+      }
+
+      const pills = document.createElement("div");
+      pills.className = "pills";
+      for (const src of seg.source_ids) {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        pill.textContent = src;
+        pills.appendChild(pill);
+      }
+      el.append(marker, time, desc, pills);
+      return el;
+    }
+
+    el.append(marker, time, desc);
+    return el;
+  }
+
+  function renderTimeline(structured) {
+    const events = buildEvents(structured);
+    if (events.length === 0) {
+      renderEmpty();
+      return;
+    }
+
+    const startH = hourFraction(fmt(structured.window.start));
+    const endH = hourFraction(fmt(structured.window.end));
+
+    const timeline = document.createElement("div");
+    timeline.className = "timeline";
+    const spineStops = [0, 0.25, 0.5, 0.75, 1]
+      .map((t) => colorForHour(startH + (endH - startH) * t))
+      .join(", ");
+    timeline.style.setProperty("--spine", `linear-gradient(to bottom, ${spineStops})`);
+
+    events.forEach((event, i) => timeline.appendChild(eventCard(event, i)));
+    results.appendChild(timeline);
+  }
+
+  function updateDayArcRange(startTime, endTime) {
+    const startH = hourFraction(startTime);
+    const endH = hourFraction(endTime);
+    const left = Math.max(0, Math.min(100, (startH / 24) * 100));
+    const right = Math.max(0, Math.min(100, (endH / 24) * 100));
+    dayarcRange.style.left = `${left}%`;
+    dayarcRange.style.width = `${Math.max(1, right - left)}%`;
+    dayarcRange.classList.add("visible");
+  }
+
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = "משחזר…";
+    clear(results);
+
+    const startTime = document.getElementById("start_time").value;
+    const endTime = document.getElementById("end_time").value;
+
+    const payload = {
+      scooter_id: document.getElementById("scooter_id").value,
+      date: document.getElementById("date").value,
+      start_time: startTime,
+      end_time: endTime,
+      timezone: TIMEZONE,
+    };
+
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        renderError(`הבקשה לא תקינה: ${data.detail || res.statusText}`);
+      } else {
+        updateDayArcRange(startTime, endTime);
+        renderTimeline(data.structured);
+
+        const details = document.createElement("details");
+        details.className = "tech";
+        const summary = document.createElement("summary");
+        summary.textContent = "פרטים טכניים (JSON)";
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(data.structured, null, 2);
+        details.append(summary, pre);
+        results.appendChild(details);
+      }
+    } catch (err) {
+      renderError(`לא הצלחנו להתחבר לשרת. ודאו שהשרת פעיל ונסו שוב. (${err.message})`);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "שחזר ציר זמן";
+    }
+  });
+</script>
+</body>
+</html>
