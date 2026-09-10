@@ -1,18 +1,27 @@
 from datetime import date, datetime, time as dt_time, timezone
 
-from day_unfolded.analysis.pipeline import run_analysis
+import pytest
+
+from day_unfolded.analysis.pipeline import UnknownSourceError, run_analysis
+from day_unfolded.domain.contact import ContactChannel, CustomerContactEvent
 from day_unfolded.domain.observation import OriginType
 from day_unfolded.domain.request import AnalysisRequest
 from day_unfolded.domain.result import SourceStatusCode
 from day_unfolded.sources.base import SourceMalformedDataError, SourceTimeoutError, SourceUnavailableError
+from day_unfolded.sources.contact_registry import ContactSourceRegistry
 from day_unfolded.sources.registry import SourceConfig, SourceRegistry
 
 T0 = datetime(2026, 9, 8, 10, 0, tzinfo=timezone.utc)
 
 
-def _request() -> AnalysisRequest:
+def _request(source_ids: list[str] | None = None) -> AnalysisRequest:
     return AnalysisRequest(
-        scooter_id="p1", date=date(2026, 9, 8), start_time=dt_time(9, 0), end_time=dt_time(18, 0), timezone="UTC"
+        scooter_id="p1",
+        date=date(2026, 9, 8),
+        start_time=dt_time(9, 0),
+        end_time=dt_time(18, 0),
+        timezone="UTC",
+        source_ids=source_ids,
     )
 
 
@@ -45,6 +54,26 @@ class FakeAdapter:
         return list(self._observations)
 
     def to_observations(self, records):
+        if self._malformed:
+            raise SourceMalformedDataError("fixture-forced malformed data")
+        return records
+
+
+class FakeContactAdapter:
+    """Test-only in-memory contact adapter, mirroring FakeAdapter."""
+
+    def __init__(self, source_id, events=None, fetch_error=None, malformed=False):
+        self.source_id = source_id
+        self._events = events or []
+        self._fetch_error = fetch_error
+        self._malformed = malformed
+
+    def fetch(self, scooter_id, window):
+        if self._fetch_error:
+            raise self._fetch_error
+        return list(self._events)
+
+    def to_events(self, records):
         if self._malformed:
             raise SourceMalformedDataError("fixture-forced malformed data")
         return records
@@ -121,3 +150,100 @@ def test_provenance_survives_full_pipeline_run(make_observation, config):
     assert result.observations[0].origin_type == OriginType.DERIVED
     assert result.observations[0].derivation == "cell_tower_lookup"
     assert result.segments[0].source_ids == ["DB_X"]
+
+
+def test_source_ids_none_queries_every_registered_source(make_observation, config):
+    obs_a = make_observation(time=T0, lat=32.0, lon=34.0, source_id="DB_A")
+    obs_b = make_observation(time=T0, lat=32.0, lon=34.0, source_id="DB_B")
+    registry = SourceRegistry()
+    registry.register(_source_config("DB_A"), FakeAdapter("DB_A", observations=[obs_a]))
+    registry.register(_source_config("DB_B"), FakeAdapter("DB_B", observations=[obs_b]))
+
+    result = run_analysis(_request(source_ids=None), registry, config)
+
+    assert {s.source_id for s in result.source_statuses} == {"DB_A", "DB_B"}
+
+
+def test_source_ids_filters_to_only_the_chosen_sources(make_observation, config):
+    obs_a = make_observation(time=T0, lat=32.0, lon=34.0, source_id="DB_A")
+    obs_b = make_observation(time=T0, lat=32.0, lon=34.0, source_id="DB_B")
+    registry = SourceRegistry()
+    registry.register(_source_config("DB_A"), FakeAdapter("DB_A", observations=[obs_a]))
+    registry.register(_source_config("DB_B"), FakeAdapter("DB_B", observations=[obs_b]))
+
+    result = run_analysis(_request(source_ids=["DB_A"]), registry, config)
+
+    assert {s.source_id for s in result.source_statuses} == {"DB_A"}
+    assert result.observations[0].source_id == "DB_A"
+
+
+def test_unknown_source_id_is_rejected(config):
+    registry = SourceRegistry()
+    registry.register(_source_config("DB_A"), FakeAdapter("DB_A"))
+
+    with pytest.raises(UnknownSourceError):
+        run_analysis(_request(source_ids=["DB_NOPE"]), registry, config)
+
+
+def _contact_event(**overrides) -> CustomerContactEvent:
+    fields = dict(
+        scooter_id="p1",
+        time=T0,
+        channel=ContactChannel.CALL,
+        summary="customer called",
+        source_id="DB_CALLS",
+        source_record_ref="call-1",
+    )
+    fields.update(overrides)
+    return CustomerContactEvent(**fields)
+
+
+def test_customer_contacts_are_queried_and_included(config):
+    registry = SourceRegistry()
+    contact_registry = ContactSourceRegistry()
+    contact_registry.register(_source_config("DB_CALLS"), FakeContactAdapter("DB_CALLS", events=[_contact_event()]))
+
+    result = run_analysis(_request(), registry, config, contact_registry=contact_registry)
+
+    assert len(result.customer_contacts) == 1
+    assert result.customer_contacts[0].source_id == "DB_CALLS"
+    assert {s.source_id for s in result.source_statuses} == {"DB_CALLS"}
+
+
+def test_customer_contacts_never_affect_segments_or_gaps(make_observation, config):
+    good_obs = make_observation(time=T0, lat=32.0, lon=34.0, source_id="DB_LOC")
+    registry = SourceRegistry()
+    registry.register(_source_config("DB_LOC"), FakeAdapter("DB_LOC", observations=[good_obs]))
+    contact_registry = ContactSourceRegistry()
+    contact_registry.register(_source_config("DB_CALLS"), FakeContactAdapter("DB_CALLS", events=[_contact_event()]))
+
+    with_contacts = run_analysis(_request(), registry, config, contact_registry=contact_registry)
+    without_contacts = run_analysis(_request(), registry, config)
+
+    assert with_contacts.segments == without_contacts.segments
+    assert with_contacts.gaps == without_contacts.gaps
+    assert len(with_contacts.customer_contacts) == 1
+    assert without_contacts.customer_contacts == []
+
+
+def test_source_ids_can_select_a_contact_source_only(make_observation, config):
+    good_obs = make_observation(time=T0, lat=32.0, lon=34.0, source_id="DB_LOC")
+    registry = SourceRegistry()
+    registry.register(_source_config("DB_LOC"), FakeAdapter("DB_LOC", observations=[good_obs]))
+    contact_registry = ContactSourceRegistry()
+    contact_registry.register(_source_config("DB_CALLS"), FakeContactAdapter("DB_CALLS", events=[_contact_event()]))
+
+    result = run_analysis(_request(source_ids=["DB_CALLS"]), registry, config, contact_registry=contact_registry)
+
+    assert result.observations == []
+    assert len(result.customer_contacts) == 1
+
+
+def test_unknown_source_id_rejected_even_with_contact_registry_present(config):
+    registry = SourceRegistry()
+    registry.register(_source_config("DB_LOC"), FakeAdapter("DB_LOC"))
+    contact_registry = ContactSourceRegistry()
+    contact_registry.register(_source_config("DB_CALLS"), FakeContactAdapter("DB_CALLS"))
+
+    with pytest.raises(UnknownSourceError):
+        run_analysis(_request(source_ids=["NOPE"]), registry, config, contact_registry=contact_registry)

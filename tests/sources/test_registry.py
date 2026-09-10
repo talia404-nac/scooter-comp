@@ -54,3 +54,28 @@ def test_empty_registry():
     registry = SourceRegistry()
     assert registry.source_ids() == []
     assert registry.all_adapters() == []
+
+
+def test_all_configs_returns_every_registered_config():
+    registry = SourceRegistry()
+    registry.register(_config("DB_X"), _Adapter("DB_X"))
+    registry.register(_config("DB_Y"), _Adapter("DB_Y"))
+
+    assert {c.id for c in registry.all_configs()} == {"DB_X", "DB_Y"}
+
+
+def test_adapters_for_returns_only_requested_subset():
+    registry = SourceRegistry()
+    registry.register(_config("DB_X"), _Adapter("DB_X"))
+    registry.register(_config("DB_Y"), _Adapter("DB_Y"))
+
+    subset = registry.adapters_for(["DB_Y"])
+
+    assert [a.source_id for a in subset] == ["DB_Y"]
+
+
+def test_adapters_for_unknown_id_is_silently_ignored():
+    registry = SourceRegistry()
+    registry.register(_config("DB_X"), _Adapter("DB_X"))
+
+    assert registry.adapters_for(["DB_NOPE"]) == []

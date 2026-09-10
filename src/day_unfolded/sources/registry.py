@@ -57,5 +57,17 @@ class SourceRegistry:
     def get_adapter(self, source_id: str) -> SourceAdapter:
         return self._adapters[source_id]
 
+    def all_configs(self) -> list[SourceConfig]:
+        return list(self._configs.values())
+
     def all_adapters(self) -> list[SourceAdapter]:
         return list(self._adapters.values())
+
+    def adapters_for(self, source_ids: list[str]) -> list[SourceAdapter]:
+        """Adapters for the requested ids that are actually registered, in
+        registry order. Ids with no matching registration are silently
+        dropped — callers that need to reject unknown ids (e.g. to surface a
+        client-facing validation error) should check `source_ids()` first.
+        """
+        wanted = set(source_ids)
+        return [adapter for sid, adapter in self._adapters.items() if sid in wanted]

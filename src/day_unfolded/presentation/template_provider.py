@@ -30,11 +30,19 @@ def _sources_tag(sources: list[str]) -> str:
     return "(" + ", ".join(sources) + ")"
 
 
+_CHANNEL_HE = {"call": "שיחת טלפון", "message": "הודעה"}
+
+
 def _render_event(event: dict) -> str:
     start, end = event["start"], event["end"]
 
     if event["type"] == "gap":
         return f"{start}–{end} — אין מידע מספיק לקבוע את מיקומו."
+
+    if event["type"] == "contact":
+        channel = _CHANNEL_HE.get(event["channel"], event["channel"])
+        tag = _sources_tag(event["sources"])
+        return f'{start} — {channel} מלקוח: "{event["summary"]}" {tag}'
 
     if event["type"] == "conflict":
         parts = [

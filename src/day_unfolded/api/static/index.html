@@ -1,420 +1,228 @@
 <!doctype html>
-<html lang="he" dir="rtl">
+<html class="h-full bg-background" lang="he" dir="rtl">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>יום בחיים של קורקינט — שחזור ציר זמן מיקומים</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Day Unfolded — שחזור ציר זמן קורקינט</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          /* Brand palette: denim blue for primary actions, brand red for
+             errors/conflicts, brown as a warm accent — the color story
+             pulled from the logo reference (not Apple's own systemBlue).
+             Neutrals stay Apple-HIG-style systemGray for a calm, quiet
+             chrome around those accents. Token names kept as-is (earlier
+             Material-era names) since every class in this file already
+             references them; only the values moved. */
+          "primary-container": "#2f5fa8",
+          "outline-variant": "#d2d2d7",
+          primary: "#24487f",
+          "on-secondary-container": "#6e6e73",
+          "on-background": "#1d1d1f",
+          "surface-container-high": "#e5e5ea",
+          "error-container": "#fbe4e2",
+          "on-secondary": "#ffffff",
+          "surface-container-low": "#f5f5f7",
+          "secondary-container": "#ededf0",
+          background: "#f5f5f7",
+          secondary: "#6e6e73",
+          "on-surface": "#1d1d1f",
+          "on-error": "#ffffff",
+          outline: "#8e8e93",
+          "on-surface-variant": "#48484a",
+          "on-primary-container": "#ffffff",
+          "surface-container-lowest": "#ffffff",
+          "surface-container": "#f2f2f7",
+          "on-error-container": "#8c1a16",
+          error: "#d62b26",
+          "surface-container-highest": "#eaeaee",
+          brand: "#d62b26",
+          brown: "#5b3a29",
+        },
+        borderRadius: { DEFAULT: "0.375rem", lg: "0.625rem", xl: "0.875rem", full: "9999px" },
+        spacing: {
+          "space-2xs": "0.25rem", "space-xs": "0.5rem", "space-sm": "0.75rem",
+          "space-md": "1rem", "space-lg": "1.5rem", "space-xl": "2rem",
+          "container-max": "72rem",
+        },
+        fontFamily: {
+          sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Segoe UI"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+          title: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Segoe UI"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+          "body-md": ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Segoe UI"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+          "label-md": ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Segoe UI"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+          "label-sm": ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Segoe UI"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+          "headline-sm": ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Segoe UI"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+          "body-sm": ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Segoe UI"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        },
+        fontSize: {
+          title: ["18px", { lineHeight: "24px", letterSpacing: "-0.012em", fontWeight: "600" }],
+          "body-md": ["15px", { lineHeight: "22px", letterSpacing: "-0.009em", fontWeight: "400" }],
+          "label-md": ["13px", { lineHeight: "16px", letterSpacing: "-0.004em", fontWeight: "500" }],
+          "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+          "headline-sm": ["22px", { lineHeight: "28px", letterSpacing: "-0.015em", fontWeight: "600" }],
+          "body-sm": ["13px", { lineHeight: "18px", letterSpacing: "-0.006em", fontWeight: "400" }],
+        },
+      },
+    },
+  };
+</script>
+
 <style>
-  :root {
-    color-scheme: dark;
-
-    /* base surfaces */
-    --bg: #17151a;
-    --panel: #201c24;
-    --panel-raised: #2a242c;
-    --border: #3a333c;
-    --border-soft: #2c2730;
-
-    /* text */
-    --text: #f3efe9;
-    --muted: #aba098;
-    --faint: #756c6f;
-
-    /* the day-arc: night -> dawn -> midday -> dusk -> night */
-    --night: #1b2244;
-    --dawn: #e8735a;
-    --midday: #6fb1e8;
-    --dusk: #8b5fbf;
-
-    /* action + status */
-    --action-a: #e8735a;
-    --action-b: #8b5fbf;
-    --danger: #d9614f;
-    --danger-bg: rgba(217, 97, 79, 0.12);
-
-    --radius: 14px;
-    --radius-sm: 9px;
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    vertical-align: middle;
+    display: inline-block;
+    line-height: 1;
   }
-
-  * { box-sizing: border-box; }
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #eaeaee; border-radius: 4px; }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
   }
 
-  html { background: var(--bg); }
-
-  body {
-    margin: 0;
-    min-height: 100vh;
-    font-family: "Assistant", "Segoe UI Variable", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
-    background:
-      radial-gradient(1200px 500px at 20% -10%, rgba(139, 95, 191, 0.14), transparent 60%),
-      radial-gradient(900px 500px at 100% 0%, rgba(232, 115, 90, 0.10), transparent 55%),
-      var(--bg);
-    color: var(--text);
-    display: flex;
-    justify-content: center;
-    padding: 32px 16px 64px;
-  }
-
-  main {
-    width: 100%;
-    max-width: 760px;
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-  }
-
-  /* ---------- masthead ---------- */
-
-  .masthead { position: relative; }
-
-  .stamp {
-    position: absolute;
-    inset-inline-end: -6px;
-    top: -14px;
-    transform: rotate(-7deg);
-    border: 2px solid #b8695a;
-    border-radius: 6px;
-    color: #d98a7a;
-    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    font-size: 0.62rem;
-    letter-spacing: 0.06em;
-    padding: 4px 8px;
-    line-height: 1.3;
-    text-align: center;
-    opacity: 0.85;
-    box-shadow: inset 0 0 0 1px rgba(184, 105, 90, 0.35);
-    pointer-events: none;
-    user-select: none;
-  }
-
-  .eyebrow {
-    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin: 0 0 6px;
-  }
-
-  h1 {
-    font-family: "Rubik", "Segoe UI Variable", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
-    font-size: clamp(1.4rem, 1.05rem + 1.6vw, 2rem);
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    margin: 0 0 18px;
-    max-width: 22ch;
-  }
-
-  .dayarc { direction: ltr; }
-
-  .dayarc-track {
-    height: 10px;
-    border-radius: 999px;
-    background: linear-gradient(to right, var(--night) 0%, var(--dawn) 25%, var(--midday) 50%, var(--dusk) 75%, var(--night) 100%);
-    position: relative;
-    overflow: visible;
-  }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .event-card { animation: rise 0.35s ease both; animation-delay: calc(var(--i, 0) * 40ms); }
 
   .dayarc-range {
-    position: absolute;
-    top: -4px;
-    bottom: -4px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.16);
-    outline: 1.5px solid rgba(255, 255, 255, 0.55);
-    transition: left 0.5s ease, width 0.5s ease, opacity 0.3s ease;
-    opacity: 0;
+    position: absolute; top: -3px; bottom: -3px; border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.35); outline: 1.5px solid rgba(255, 255, 255, 0.8);
+    transition: left 0.5s ease, width 0.5s ease, opacity 0.3s ease; opacity: 0;
   }
   .dayarc-range.visible { opacity: 1; }
-
-  .dayarc-ticks {
-    display: flex;
-    justify-content: space-between;
-    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    font-size: 0.68rem;
-    color: var(--faint);
-    margin-top: 6px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* ---------- form card ---------- */
-
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-  }
-
-  .card-eyebrow {
-    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.08em;
-    color: var(--faint);
-    margin: 0 0 14px;
-  }
-
-  form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  form .full { grid-column: 1 / -1; }
-
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 0.78rem;
-    color: var(--muted);
-  }
-
-  input {
-    font-family: inherit;
-    font-size: 0.95rem;
-    padding: 10px 12px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--panel-raised);
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-  }
-  input:focus-visible {
-    outline: 2px solid var(--midday);
-    outline-offset: 1px;
-    border-color: transparent;
-  }
-
-  button {
-    grid-column: 1 / -1;
-    margin-top: 4px;
-    padding: 12px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: linear-gradient(135deg, var(--action-a), var(--action-b));
-    color: #201227;
-    font-weight: 700;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-  }
-  button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px -8px rgba(139, 95, 191, 0.55); }
-  button:focus-visible { outline: 2px solid var(--midday); outline-offset: 2px; }
-  button:disabled { opacity: 0.55; cursor: default; transform: none; box-shadow: none; }
-
-  @media (max-width: 520px) {
-    form { grid-template-columns: 1fr; }
-  }
-
-  /* ---------- results ---------- */
-
-  #results { display: flex; flex-direction: column; gap: 18px; }
-
-  .results-heading {
-    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
-    color: var(--faint);
-    margin: 4px 0 0;
-  }
-
-  .timeline {
-    position: relative;
-    padding-inline-start: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .timeline::before {
-    content: "";
-    position: absolute;
-    inset-inline-start: 9px;
-    top: 6px;
-    bottom: 6px;
-    width: 2px;
-    background: var(--spine, var(--border));
-    border-radius: 2px;
-  }
-
-  .event {
-    position: relative;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    animation: rise 0.4s ease both;
-    animation-delay: calc(var(--i, 0) * 45ms);
-  }
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .event .marker {
-    position: absolute;
-    inset-inline-start: -30px;
-    top: 16px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--marker, var(--faint));
-    box-shadow: 0 0 0 3px var(--panel);
-  }
-  .event .marker.hollow {
-    background: transparent;
-    border: 2px dashed var(--faint);
-  }
-  .event .marker.arrow {
-    border-radius: 3px;
-    background: transparent;
-    box-shadow: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--marker, var(--midday));
-    font-size: 0.9rem;
-    transform-origin: center;
-  }
-  .event .marker.conflict {
-    border-radius: 3px;
-    transform: rotate(45deg);
-    background: var(--danger);
-  }
-
-  .event .time {
-    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    font-size: 0.78rem;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.01em;
-  }
-
-  .event .desc {
-    margin-top: 4px;
-    font-size: 0.95rem;
-    line-height: 1.55;
-  }
-
-  .pills { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
-  .pill {
-    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.02em;
-    color: var(--muted);
-    background: var(--panel-raised);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 2px 9px;
-  }
-
-  .event.conflict-card { border-color: rgba(217, 97, 79, 0.4); }
-  .event.gap-card { background: transparent; border-style: dashed; }
-  .event.gap-card .desc { color: var(--muted); }
-
-  .empty-state, .error-state {
-    border-radius: var(--radius);
-    padding: 22px;
-    text-align: center;
-    font-size: 0.95rem;
-  }
-  .empty-state {
-    background: var(--panel);
-    border: 1px dashed var(--border);
-    color: var(--muted);
-  }
-  .error-state {
-    background: var(--danger-bg);
-    border: 1px solid rgba(217, 97, 79, 0.4);
-    color: #f0c3ba;
-    text-align: start;
-  }
-
-  details.tech {
-    background: transparent;
-    border: none;
-    padding: 0;
-    font-size: 0.75rem;
-  }
-  details.tech summary {
-    cursor: pointer;
-    color: var(--faint);
-    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    letter-spacing: 0.02em;
-  }
-  details.tech pre {
-    margin-top: 8px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    color: var(--muted);
-    background: var(--panel);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-sm);
-    padding: 12px;
-    max-height: 320px;
-    overflow: auto;
-  }
-
-  footer.disclosure {
-    font-size: 0.72rem;
-    color: var(--faint);
-    line-height: 1.6;
-    border-top: 1px solid var(--border-soft);
-    padding-top: 14px;
-  }
 </style>
 </head>
-<body>
-<main>
+<body class="h-full font-body-md text-on-surface bg-background flex flex-col antialiased">
 
-  <div class="masthead">
-    <div class="stamp">טיוטה<br />נתוני הדגמה</div>
-    <p class="eyebrow">מעקב צי קורקינטים · DAY UNFOLDED</p>
-    <h1>יום בחיים של קורקינט: שחזור ציר זמן מיקומים</h1>
-    <div class="dayarc" dir="ltr">
-      <div class="dayarc-track" id="dayarcTrack">
-        <div class="dayarc-range" id="dayarcRange"></div>
-      </div>
-      <div class="dayarc-ticks"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+<!-- TOP APP BAR -->
+<header class="w-full px-space-lg py-space-xs flex items-center justify-between z-40 sticky top-0 bg-surface-container-lowest/80 backdrop-blur-md shadow-sm shrink-0">
+  <div class="flex items-center gap-space-xs">
+    <div class="w-8 h-8 rounded-xl bg-brand flex items-center justify-center text-white shadow-sm">
+      <span class="material-symbols-outlined text-[20px]">electric_scooter</span>
+    </div>
+    <div>
+      <span class="text-title font-title text-on-surface tracking-tight font-semibold">Day Unfolded</span>
+      <span class="block text-label-sm font-label-sm text-secondary -mt-1">שחזור ציר זמן קורקינט</span>
     </div>
   </div>
 
-  <section class="card">
-    <p class="card-eyebrow">בקשת שחזור</p>
-    <form id="form">
-      <label class="full">מזהה קורקינט
-        <input id="scooter_id" value="SCT-4471" required />
-      </label>
-      <label>תאריך
-        <input id="date" type="date" required />
-      </label>
-      <label>&nbsp;</label>
-      <label>משעה
-        <input id="start_time" type="time" value="09:00" required />
-      </label>
-      <label>עד שעה
-        <input id="end_time" type="time" value="18:00" required />
-      </label>
-      <button type="submit" id="submit">שחזר ציר זמן</button>
-    </form>
-  </section>
+  <div class="flex items-center gap-space-xs">
+    <span class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-brown/10 text-brown rounded-full text-label-sm font-label-sm font-medium">
+      <span class="material-symbols-outlined text-[15px]">info</span>
+      <span>נתוני הדגמה — לא מידע אמיתי</span>
+    </span>
+    <button id="exportBtn" disabled class="flex items-center gap-1.5 px-space-md py-1.5 bg-surface-container/80 hover:bg-surface-container-high disabled:opacity-40 disabled:cursor-not-allowed text-on-surface rounded-full text-label-md font-label-md transition-all active:scale-[0.98]">
+      <span class="material-symbols-outlined text-[16px] text-secondary">file_download</span>
+      <span>ייצוא JSON</span>
+    </button>
+  </div>
+</header>
 
-  <section id="results"></section>
+<main class="flex-1 overflow-y-auto custom-scrollbar">
+  <div class="max-w-container-max mx-auto px-space-lg py-space-lg flex flex-col gap-space-lg">
 
-  <footer class="disclosure">
-    המקור המחובר כרגע (DEMO_SOURCE) הוא נתון מלאכותי לצורך בדיקת המערכת בלבד ואינו מקור מידע אמיתי.
-    ניסוח הטקסט מיוצר במנוע תבניות דטרמיניסטי, לא במודל שפה.
-  </footer>
+    <!-- DAY-ARC REFERENCE STRIP -->
+    <section class="bg-surface-container-lowest rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-space-md">
+      <p class="text-label-sm font-label-sm text-secondary mb-3">ציר יממה — צבע כל אירוע נגזר משעת ההתרחשות שלו</p>
+      <div dir="ltr">
+        <div class="h-2.5 rounded-full relative" id="dayarcTrack" style="background: linear-gradient(to right, #1b2244 0%, #e8735a 25%, #6fb1e8 50%, #8b5fbf 75%, #1b2244 100%);">
+          <div class="dayarc-range" id="dayarcRange"></div>
+        </div>
+        <div class="flex justify-between text-label-sm font-label-sm text-secondary mt-1.5 tabular-nums">
+          <span>00</span><span>06</span><span>12</span><span>18</span><span>24</span>
+        </div>
+      </div>
+    </section>
 
+    <!-- QUERY CARD -->
+    <section class="bg-surface-container-lowest rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-space-md">
+      <p class="text-label-sm font-label-sm text-secondary mb-space-md font-semibold">בקשת שחזור</p>
+      <form id="form" class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+        <label class="sm:col-span-2 flex flex-col gap-1.5 text-label-md font-label-md text-secondary">
+          מזהה קורקינט
+          <input id="scooter_id" value="SCT-4471" required
+            class="rounded-xl border-0 ring-1 ring-outline-variant focus:ring-2 focus:ring-primary-container bg-surface-container/60 focus:bg-surface-container-lowest text-body-md font-body-md text-on-surface px-3.5 py-2.5 outline-none transition-all" />
+        </label>
+        <label class="flex flex-col gap-1.5 text-label-md font-label-md text-secondary">
+          תאריך
+          <input id="date" type="date" required
+            class="rounded-xl border-0 ring-1 ring-outline-variant focus:ring-2 focus:ring-primary-container bg-surface-container/60 focus:bg-surface-container-lowest text-body-md font-body-md text-on-surface px-3.5 py-2.5 outline-none transition-all tabular-nums" />
+        </label>
+        <div></div>
+        <label class="flex flex-col gap-1.5 text-label-md font-label-md text-secondary">
+          משעה
+          <input id="start_time" type="time" value="09:00" required
+            class="rounded-xl border-0 ring-1 ring-outline-variant focus:ring-2 focus:ring-primary-container bg-surface-container/60 focus:bg-surface-container-lowest text-body-md font-body-md text-on-surface px-3.5 py-2.5 outline-none transition-all tabular-nums" />
+        </label>
+        <label class="flex flex-col gap-1.5 text-label-md font-label-md text-secondary">
+          עד שעה
+          <input id="end_time" type="time" value="18:00" required
+            class="rounded-xl border-0 ring-1 ring-outline-variant focus:ring-2 focus:ring-primary-container bg-surface-container/60 focus:bg-surface-container-lowest text-body-md font-body-md text-on-surface px-3.5 py-2.5 outline-none transition-all tabular-nums" />
+        </label>
+        <div class="sm:col-span-2 flex flex-col gap-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-label-md font-label-md text-secondary">מקורות מידע</span>
+            <button type="button" id="sourcesToggleAll" class="text-label-sm font-label-sm text-primary-container hover:underline">בחר הכל / נקה הכל</button>
+          </div>
+          <div id="sourcesList" class="flex flex-col gap-1.5 rounded-xl ring-1 ring-outline-variant bg-surface-container/40 p-2.5 max-h-40 overflow-auto custom-scrollbar">
+            <p class="text-label-sm font-label-sm text-secondary px-1 py-1">טוען מקורות…</p>
+          </div>
+        </div>
+        <button type="submit" id="submit"
+          class="sm:col-span-2 mt-1 flex items-center justify-center gap-2 py-2.5 bg-primary-container hover:bg-primary text-on-primary-container rounded-full text-label-md font-label-md font-semibold shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+          <span class="material-symbols-outlined text-[18px]">route</span>
+          <span id="submitLabel">שחזר ציר זמן</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- STATS RIBBON (populated after a query) -->
+    <section id="statsRibbon" class="hidden grid grid-cols-2 md:grid-cols-4 gap-space-sm"></section>
+
+    <!-- CONTENT: timeline (main) + map (sticky sidebar) -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-space-lg items-start">
+      <!-- RESULTS -->
+      <section id="results" class="flex flex-col gap-space-sm min-w-0"></section>
+
+      <!-- MAP (schematic — plotted from coordinates only, no street basemap) -->
+      <aside class="lg:sticky lg:top-16 flex flex-col gap-space-sm lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto custom-scrollbar">
+        <section id="mapSection" class="hidden bg-surface-container-lowest rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-space-md">
+          <div class="flex items-center justify-between flex-wrap gap-2 mb-space-sm">
+            <p class="text-label-sm font-label-sm text-secondary font-semibold">מפת מסלול (סכמטית)</p>
+          </div>
+          <div id="mapCanvas" dir="ltr" class="w-full rounded-xl bg-surface-container/40 overflow-hidden"></div>
+          <div class="flex items-center gap-3 flex-wrap text-label-sm font-label-sm text-secondary mt-2.5">
+            <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full bg-secondary"></span>נייח</span>
+            <span class="flex items-center gap-1"><span class="inline-block w-4 h-0.5 bg-secondary"></span>בתנועה</span>
+            <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full border-2 border-secondary bg-transparent"></span>לא ידוע</span>
+            <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 bg-error rotate-45"></span>סתירה</span>
+          </div>
+          <p class="text-label-sm font-label-sm text-secondary mt-2">תרשים סכמטי מבוסס קואורדינטות מדווחות בלבד — אינו מפת רחובות אמיתית.</p>
+        </section>
+      </aside>
+    </div>
+
+  </div>
 </main>
+
+<footer class="w-full px-space-lg py-2 bg-surface-container-lowest border-t border-black/[0.05] text-label-sm font-label-sm text-secondary z-40 shrink-0">
+  <p>מקורות מלאכותיים לבדיקת המערכת בלבד — אינם מקור מידע אמיתי. ניסוח הטקסט מיוצר במנוע תבניות דטרמיניסטי, לא במודל שפה.</p>
+</footer>
 
 <script>
   const TIMEZONE = "Asia/Jerusalem";
 
   // The day-arc: fixed reference stops used both for the masthead gradient
-  // (built in CSS) and for coloring every timeline marker/spine by the
-  // actual time of day it represents — color here encodes data, not decoration.
+  // and for coloring every timeline marker/spine by the actual time of day
+  // it represents — color here encodes data, not decoration.
   const DAY_STOPS = [
     { h: 0, c: [27, 34, 68] },
     { h: 6, c: [232, 115, 90] },
@@ -449,112 +257,416 @@
 
   const form = document.getElementById("form");
   const results = document.getElementById("results");
+  const statsRibbon = document.getElementById("statsRibbon");
   const submitBtn = document.getElementById("submit");
+  const submitLabel = document.getElementById("submitLabel");
   const dayarcRange = document.getElementById("dayarcRange");
+  const exportBtn = document.getElementById("exportBtn");
+  const sourcesList = document.getElementById("sourcesList");
+  const sourcesToggleAll = document.getElementById("sourcesToggleAll");
+  const mapSection = document.getElementById("mapSection");
+  const mapCanvas = document.getElementById("mapCanvas");
 
   document.getElementById("date").valueAsDate = new Date();
 
-  function fmt(iso) {
-    return iso.slice(11, 16);
+  let lastResult = null;
+
+  const SOURCE_KIND_HE = { location: "מיקום", contact: "פניית לקוח" };
+
+  function renderSourceCheckbox(source) {
+    const label = document.createElement("label");
+    label.className = "flex items-start gap-2 px-1 py-1 rounded-lg hover:bg-surface-container-high/60 cursor-pointer";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.className = "source-checkbox mt-0.5 rounded border-outline-variant text-primary-container focus:ring-primary-container";
+    cb.value = source.id;
+    cb.checked = true;
+    const text = document.createElement("div");
+    text.className = "min-w-0";
+    const kindLabel = SOURCE_KIND_HE[source.kind] || source.kind;
+    text.innerHTML = `<div class="text-body-sm font-body-sm text-on-surface font-medium flex items-center gap-1.5">
+        ${source.name}
+        <span class="text-label-sm font-label-sm text-secondary bg-surface-container-high/70 rounded-full px-2 py-0.5">${kindLabel}</span>
+      </div>
+      <div class="text-label-sm font-label-sm text-secondary">${source.description}</div>`;
+    label.append(cb, text);
+    return label;
   }
 
+  function selectedSourceIds() {
+    return Array.from(sourcesList.querySelectorAll(".source-checkbox:checked")).map((cb) => cb.value);
+  }
+
+  async function loadSources() {
+    try {
+      const res = await fetch("/api/sources");
+      const sources = await res.json();
+      clear(sourcesList);
+      if (sources.length === 0) {
+        const p = document.createElement("p");
+        p.className = "text-label-sm font-label-sm text-secondary px-1 py-1";
+        p.textContent = "לא נרשמו מקורות מידע במערכת.";
+        sourcesList.appendChild(p);
+        return;
+      }
+      sources.forEach((s) => sourcesList.appendChild(renderSourceCheckbox(s)));
+    } catch (err) {
+      clear(sourcesList);
+      const p = document.createElement("p");
+      p.className = "text-label-sm font-label-sm text-error px-1 py-1";
+      p.textContent = "טעינת רשימת המקורות נכשלה.";
+      sourcesList.appendChild(p);
+    }
+  }
+
+  sourcesToggleAll.addEventListener("click", () => {
+    const boxes = Array.from(sourcesList.querySelectorAll(".source-checkbox"));
+    const allChecked = boxes.every((cb) => cb.checked);
+    boxes.forEach((cb) => (cb.checked = !allChecked));
+  });
+
+  loadSources();
+
+  function fmt(iso) { return iso.slice(11, 16); }
   function clear(el) { el.innerHTML = ""; }
+
+  function icon(name, extraClasses) {
+    const span = document.createElement("span");
+    span.className = "material-symbols-outlined " + (extraClasses || "");
+    span.textContent = name;
+    return span;
+  }
+
+  function statCard(iconName, colorClass, bgClass, label, value) {
+    const card = document.createElement("div");
+    card.className = "bg-surface-container-lowest p-3 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center gap-3";
+    const badge = document.createElement("div");
+    badge.className = `w-10 h-10 rounded-xl ${bgClass} flex items-center justify-center ${colorClass} shrink-0`;
+    badge.appendChild(icon(iconName, "text-[20px]"));
+    const text = document.createElement("div");
+    text.innerHTML = `<div class="text-label-sm font-label-sm text-secondary">${label}</div>
+      <div class="text-title font-title text-on-surface tabular-nums">${value}</div>`;
+    card.append(badge, text);
+    return card;
+  }
+
+  function renderStats(structured) {
+    clear(statsRibbon);
+    statsRibbon.classList.remove("hidden");
+    const okSources = structured.source_statuses.filter((s) => s.status === "ok").length;
+    statsRibbon.append(
+      statCard("timeline", "text-primary-container", "bg-primary-container/10", "מקטעי מסלול", structured.segments.length),
+      statCard("schedule", "text-secondary", "bg-surface-container-high", "פערי מידע", structured.gaps.length),
+      statCard("report_problem", structured.conflicts.length ? "text-error" : "text-secondary",
+        structured.conflicts.length ? "bg-error-container" : "bg-surface-container-high", "סתירות", structured.conflicts.length),
+      statCard("cell_tower", "text-[#34c759]", "bg-[#34c759]/10", "מקורות פעילים", `${okSources}/${structured.source_statuses.length}`),
+      statCard("support_agent", "text-[#5e5ce6]", "bg-[#5e5ce6]/10", "פניות לקוח", structured.customer_contacts.length),
+    );
+  }
+
+  // --- Schematic map: a pure coordinate scatter/route plot, not a street
+  // basemap (the page makes zero external requests, so no tile server can
+  // be used). Locally-accurate equirectangular projection: both axes are
+  // converted to meters around the route's own midpoint latitude, so a
+  // uniform px/meter scale never distorts the shape of the route.
+
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const EARTH_RADIUS_M = 6371000;
+
+  function svgEl(tag, attrs) {
+    const el = document.createElementNS(SVG_NS, tag);
+    for (const [k, v] of Object.entries(attrs || {})) el.setAttribute(k, v);
+    return el;
+  }
+
+  function toMeters(lat, lon, refLatRad) {
+    return {
+      x: EARTH_RADIUS_M * (lon * Math.PI / 180) * Math.cos(refLatRad),
+      y: EARTH_RADIUS_M * (lat * Math.PI / 180),
+    };
+  }
+
+  function buildProjection(points, width, height, padding) {
+    const refLatRad = ((Math.min(...points.map((p) => p.lat)) + Math.max(...points.map((p) => p.lat))) / 2)
+      * Math.PI / 180;
+    const projected = points.map((p) => toMeters(p.lat, p.lon, refLatRad));
+    let minX = Math.min(...projected.map((p) => p.x));
+    let maxX = Math.max(...projected.map((p) => p.x));
+    let minY = Math.min(...projected.map((p) => -p.y)); // flip so north renders up
+    let maxY = Math.max(...projected.map((p) => -p.y));
+
+    const MIN_SPREAD_M = 150; // a single point (or a near-straight route) never collapses to zero
+    if (maxX - minX < MIN_SPREAD_M) { const c = (minX + maxX) / 2; minX = c - MIN_SPREAD_M / 2; maxX = c + MIN_SPREAD_M / 2; }
+    if (maxY - minY < MIN_SPREAD_M) { const c = (minY + maxY) / 2; minY = c - MIN_SPREAD_M / 2; maxY = c + MIN_SPREAD_M / 2; }
+
+    const usableW = width - padding * 2, usableH = height - padding * 2;
+    const scale = Math.min(usableW / (maxX - minX), usableH / (maxY - minY)); // px per meter
+    const offsetX = padding + (usableW - (maxX - minX) * scale) / 2;
+    const offsetY = padding + (usableH - (maxY - minY) * scale) / 2;
+
+    return {
+      scale,
+      project(lat, lon) {
+        const m = toMeters(lat, lon, refLatRad);
+        return { x: offsetX + (m.x - minX) * scale, y: offsetY + (-m.y - minY) * scale };
+      },
+    };
+  }
+
+  const SCALE_STEPS_M = [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000];
+
+  function pickScaleBarMeters(metersPerPixel, targetPx) {
+    const targetM = metersPerPixel * targetPx;
+    let best = SCALE_STEPS_M[0];
+    for (const m of SCALE_STEPS_M) {
+      if (m <= targetM) best = m; else break;
+    }
+    return best;
+  }
+
+  function arrowhead(tip, angleRad, color) {
+    const size = 6;
+    return svgEl("polygon", {
+      points: `0,0 ${-size * 1.6},${-size * 0.8} ${-size * 1.6},${size * 0.8}`,
+      fill: color,
+      transform: `translate(${tip.x} ${tip.y}) rotate(${(angleRad * 180) / Math.PI})`,
+    });
+  }
+
+  function titled(el, text) {
+    const title = svgEl("title", {});
+    title.textContent = text;
+    el.appendChild(title);
+    return el;
+  }
+
+  function renderMap(structured) {
+    clear(mapCanvas);
+    mapSection.classList.remove("hidden");
+
+    const obsById = new Map();
+    for (const o of structured.observations) {
+      if (o.latitude != null && o.longitude != null) obsById.set(o.id, o);
+    }
+
+    const points = [...obsById.values()].map((o) => ({ lat: o.latitude, lon: o.longitude }));
+    for (const c of structured.conflicts) {
+      for (const o of c.observations) points.push({ lat: o.latitude, lon: o.longitude });
+    }
+    for (const s of structured.segments) {
+      if (s.representative_latitude != null) points.push({ lat: s.representative_latitude, lon: s.representative_longitude });
+    }
+
+    if (points.length === 0) {
+      const p = document.createElement("p");
+      p.className = "text-body-sm font-body-sm text-secondary text-center py-10";
+      p.textContent = "אין נתוני מיקום להצגה על המפה.";
+      mapCanvas.appendChild(p);
+      return;
+    }
+
+    const WIDTH = 640, HEIGHT = 360, PADDING = 36;
+    const proj = buildProjection(points, WIDTH, HEIGHT, PADDING);
+    const svg = svgEl("svg", { viewBox: `0 0 ${WIDTH} ${HEIGHT}`, class: "w-full h-auto block" });
+
+    const grid = svgEl("g", { stroke: "rgba(0,0,0,0.06)", "stroke-width": 1 });
+    for (let i = 1; i < 4; i++) {
+      const x = PADDING + ((WIDTH - PADDING * 2) / 4) * i;
+      const y = PADDING + ((HEIGHT - PADDING * 2) / 4) * i;
+      grid.appendChild(svgEl("line", { x1: x, y1: PADDING, x2: x, y2: HEIGHT - PADDING }));
+      grid.appendChild(svgEl("line", { x1: PADDING, y1: y, x2: WIDTH - PADDING, y2: y }));
+    }
+    svg.appendChild(grid);
+
+    for (const seg of structured.segments) {
+      if (seg.state !== "moving") continue;
+      const [fromId, toId] = seg.supporting_observation_ids;
+      const from = obsById.get(fromId), to = obsById.get(toId);
+      if (!from || !to) continue;
+      const p1 = proj.project(from.latitude, from.longitude);
+      const p2 = proj.project(to.latitude, to.longitude);
+      const color = colorForHour(hourFraction(fmt(seg.start_time)));
+      const line = svgEl("line", {
+        x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+        stroke: color, "stroke-width": 2.5, "stroke-linecap": "round",
+      });
+      svg.appendChild(titled(line, `${fmt(seg.start_time)}–${fmt(seg.end_time)} · בתנועה לכיוון ${DIRECTION_HE[seg.direction] ?? seg.direction ?? ""}`));
+      svg.appendChild(arrowhead(p2, Math.atan2(p2.y - p1.y, p2.x - p1.x), color));
+    }
+
+    for (const seg of structured.segments) {
+      if (seg.state === "moving" || seg.representative_latitude == null) continue;
+      const p = proj.project(seg.representative_latitude, seg.representative_longitude);
+      const color = colorForHour(hourFraction(fmt(seg.start_time)));
+      const circle = seg.state === "stationary"
+        ? svgEl("circle", { cx: p.x, cy: p.y, r: 6, fill: color, stroke: "white", "stroke-width": 1.5 })
+        : svgEl("circle", { cx: p.x, cy: p.y, r: 5, fill: "none", stroke: color, "stroke-width": 2, "stroke-dasharray": "2,2" });
+      svg.appendChild(titled(circle, `${fmt(seg.start_time)}–${fmt(seg.end_time)} · ${seg.state === "stationary" ? "נייח" : "לא ידוע"}`));
+    }
+
+    for (const c of structured.conflicts) {
+      const pts = c.observations.map((o) => proj.project(o.latitude, o.longitude));
+      for (let i = 0; i < pts.length - 1; i++) {
+        svg.appendChild(svgEl("line", {
+          x1: pts[i].x, y1: pts[i].y, x2: pts[i + 1].x, y2: pts[i + 1].y,
+          stroke: "#d62b26", "stroke-width": 1.5, "stroke-dasharray": "3,3",
+        }));
+      }
+      c.observations.forEach((o, i) => {
+        const p = pts[i];
+        const diamond = svgEl("rect", {
+          x: p.x - 4, y: p.y - 4, width: 8, height: 8,
+          transform: `rotate(45 ${p.x} ${p.y})`,
+          fill: "#d62b26", stroke: "white", "stroke-width": 1,
+        });
+        svg.appendChild(titled(diamond, `${fmt(c.start_time)} · סתירה · ${o.source_id}`));
+      });
+    }
+
+    const compass = svgEl("g", { transform: `translate(${WIDTH - PADDING - 2}, ${PADDING - 10})`, class: "text-secondary" });
+    const compassLabel = svgEl("text", { x: 0, y: 0, "text-anchor": "middle", fill: "currentColor", style: "font-size:11px;font-weight:600" });
+    compassLabel.textContent = "N";
+    compass.append(compassLabel, svgEl("line", { x1: 0, y1: 4, x2: 0, y2: 16, stroke: "currentColor", "stroke-width": 1.5 }));
+    svg.appendChild(compass);
+
+    const barMeters = pickScaleBarMeters(1 / proj.scale, 70);
+    const barLenPx = barMeters * proj.scale;
+    const scaleG = svgEl("g", { transform: `translate(${PADDING}, ${HEIGHT - 14})`, class: "text-secondary" });
+    scaleG.append(
+      svgEl("line", { x1: 0, y1: 0, x2: barLenPx, y2: 0, stroke: "currentColor", "stroke-width": 2 }),
+      svgEl("line", { x1: 0, y1: -3, x2: 0, y2: 3, stroke: "currentColor", "stroke-width": 2 }),
+      svgEl("line", { x1: barLenPx, y1: -3, x2: barLenPx, y2: 3, stroke: "currentColor", "stroke-width": 2 }),
+    );
+    const scaleLabel = svgEl("text", { x: barLenPx / 2, y: -6, "text-anchor": "middle", fill: "currentColor", style: "font-size:10px" });
+    scaleLabel.textContent = barMeters >= 1000 ? `${barMeters / 1000} ק"מ` : `${barMeters} מ'`;
+    scaleG.appendChild(scaleLabel);
+    svg.appendChild(scaleG);
+
+    mapCanvas.appendChild(svg);
+  }
 
   function renderEmpty() {
     const div = document.createElement("div");
-    div.className = "empty-state";
-    div.textContent = "לא נמצא מידע על הקורקינט המבוקש בטווח הזמן הזה.";
+    div.className = "bg-surface-container-lowest border border-dashed border-black/10 rounded-2xl p-8 text-center text-secondary text-body-md font-body-md flex flex-col items-center gap-2";
+    div.append(icon("search_off", "text-[28px] text-outline"));
+    const p = document.createElement("p");
+    p.textContent = "לא נמצא מידע על הקורקינט המבוקש בטווח הזמן הזה.";
+    div.appendChild(p);
     results.appendChild(div);
   }
 
   function renderError(message) {
     const div = document.createElement("div");
-    div.className = "error-state";
-    div.textContent = message;
+    div.className = "bg-error-container/40 border border-error/30 rounded-2xl p-space-md text-on-error-container text-body-sm font-body-sm flex items-start gap-2";
+    div.append(icon("error", "text-[18px] text-error mt-0.5"));
+    const p = document.createElement("p");
+    p.textContent = message;
+    div.appendChild(p);
     results.appendChild(div);
   }
 
   function buildEvents(structured) {
     const events = [];
-    for (const s of structured.segments) {
-      events.push({ type: "segment", start: s.start_time, end: s.end_time, data: s });
-    }
-    for (const g of structured.gaps) {
-      events.push({ type: "gap", start: g.start_time, end: g.end_time, data: g });
-    }
-    for (const c of structured.conflicts) {
-      events.push({ type: "conflict", start: c.start_time, end: c.end_time, data: c });
-    }
+    for (const s of structured.segments) events.push({ type: "segment", start: s.start_time, end: s.end_time, data: s });
+    for (const g of structured.gaps) events.push({ type: "gap", start: g.start_time, end: g.end_time, data: g });
+    for (const c of structured.conflicts) events.push({ type: "conflict", start: c.start_time, end: c.end_time, data: c });
+    for (const c of structured.customer_contacts) events.push({ type: "contact", start: c.time, end: c.time, data: c });
     events.sort((a, b) => a.start.localeCompare(b.start));
     return events;
   }
 
+  function pill(text) {
+    const span = document.createElement("span");
+    span.className = "font-medium text-label-sm font-label-sm text-secondary bg-surface-container-high/70 rounded-full px-2.5 py-0.5 tabular-nums";
+    span.textContent = text;
+    return span;
+  }
+
   function eventCard(event, index) {
     const el = document.createElement("div");
-    el.className = "event";
+    el.className = "event-card p-3.5 flex items-start gap-3";
     el.style.setProperty("--i", index);
 
-    const marker = document.createElement("div");
-    marker.className = "marker";
+    const badge = document.createElement("div");
+    badge.className = "w-9 h-9 rounded-lg flex items-center justify-center shrink-0";
+
+    const body = document.createElement("div");
+    body.className = "flex-1 min-w-0";
 
     const time = document.createElement("div");
-    time.className = "time";
+    time.className = "text-label-sm font-label-sm text-secondary tabular-nums";
 
     const desc = document.createElement("div");
-    desc.className = "desc";
+    desc.className = "text-body-md font-body-md text-on-surface font-medium mt-0.5";
 
-    const startH = hourFraction(fmt(event.start));
+    body.append(time, desc);
+    el.append(badge, body);
 
     if (event.type === "gap") {
-      el.classList.add("gap-card");
-      marker.classList.add("hollow");
+      badge.classList.add("bg-surface-container-high", "text-secondary");
+      badge.appendChild(icon("schedule", "text-[18px]"));
       time.textContent = `${fmt(event.start)}–${fmt(event.end)}`;
       desc.textContent = "אין מידע מספיק לקבוע את מיקומו.";
-    } else if (event.type === "conflict") {
-      el.classList.add("conflict-card");
-      marker.classList.add("conflict");
-      time.textContent = fmt(event.start);
-      desc.textContent = "נמצאו מיקומים סותרים בין מקורות שונים — לא נבחר ביניהם.";
-      const pills = document.createElement("div");
-      pills.className = "pills";
-      for (const o of event.data.observations) {
-        const pill = document.createElement("span");
-        pill.className = "pill";
-        pill.textContent = `${o.source_id} · ${o.latitude.toFixed(4)}, ${o.longitude.toFixed(4)}`;
-        pills.appendChild(pill);
-      }
-      el.append(marker, time, desc, pills);
-      return el;
-    } else {
-      const seg = event.data;
-      const color = colorForHour(startH);
-      marker.style.setProperty("--marker", color);
-      time.textContent = `${fmt(event.start)}–${fmt(event.end)}`;
-
-      if (seg.state === "moving") {
-        marker.classList.add("arrow");
-        marker.textContent = "▲";
-        marker.style.transform = `rotate(${DIRECTION_DEG[seg.direction] ?? 0}deg)`;
-        desc.textContent = `בתנועה לכיוון ${DIRECTION_HE[seg.direction] ?? seg.direction ?? ""}`;
-      } else if (seg.representative_latitude != null) {
-        desc.textContent = `נמצא באזור (${seg.representative_latitude.toFixed(4)}, ${seg.representative_longitude.toFixed(4)})`;
-      } else {
-        desc.textContent = "מיקום לא ידוע";
-      }
-
-      const pills = document.createElement("div");
-      pills.className = "pills";
-      for (const src of seg.source_ids) {
-        const pill = document.createElement("span");
-        pill.className = "pill";
-        pill.textContent = src;
-        pills.appendChild(pill);
-      }
-      el.append(marker, time, desc, pills);
+      desc.classList.add("text-secondary", "font-normal");
       return el;
     }
 
-    el.append(marker, time, desc);
+    if (event.type === "conflict") {
+      badge.classList.add("bg-error-container", "text-error");
+      badge.appendChild(icon("warning", "text-[18px]"));
+      time.textContent = fmt(event.start);
+      desc.textContent = "נמצאו מיקומים סותרים בין מקורות שונים — לא נבחר ביניהם.";
+      const pills = document.createElement("div");
+      pills.className = "flex flex-wrap gap-1.5 mt-2";
+      for (const o of event.data.observations) {
+        pills.appendChild(pill(`${o.source_id} · ${o.latitude.toFixed(4)}, ${o.longitude.toFixed(4)}`));
+      }
+      body.appendChild(pills);
+      return el;
+    }
+
+    if (event.type === "contact") {
+      const contact = event.data;
+      const color = colorForHour(hourFraction(fmt(event.start)));
+      badge.style.backgroundColor = color + "1a";
+      badge.style.color = color;
+      badge.appendChild(icon(contact.channel === "call" ? "call" : "sms", "text-[18px]"));
+      time.textContent = fmt(event.start);
+      desc.textContent = `${contact.channel === "call" ? "שיחת טלפון מלקוח" : "הודעת לקוח"}: ${contact.summary}`;
+      const pills = document.createElement("div");
+      pills.className = "flex flex-wrap gap-1.5 mt-2";
+      pills.appendChild(pill(contact.source_id));
+      body.appendChild(pills);
+      return el;
+    }
+
+    const seg = event.data;
+    const color = colorForHour(hourFraction(fmt(event.start)));
+    time.textContent = `${fmt(event.start)}–${fmt(event.end)}`;
+
+    if (seg.state === "moving") {
+      badge.style.backgroundColor = color + "1a";
+      badge.style.color = color;
+      const navIcon = icon("navigation", "text-[18px]");
+      navIcon.style.transform = `rotate(${DIRECTION_DEG[seg.direction] ?? 0}deg)`;
+      badge.appendChild(navIcon);
+      desc.textContent = `בתנועה לכיוון ${DIRECTION_HE[seg.direction] ?? seg.direction ?? ""}`;
+    } else if (seg.representative_latitude != null) {
+      badge.style.backgroundColor = color + "1a";
+      badge.style.color = color;
+      badge.appendChild(icon("place", "text-[18px]"));
+      desc.textContent = `נמצא באזור (${seg.representative_latitude.toFixed(4)}, ${seg.representative_longitude.toFixed(4)})`;
+    } else {
+      badge.classList.add("bg-surface-container-high", "text-secondary");
+      badge.appendChild(icon("help", "text-[18px]"));
+      desc.textContent = "מיקום לא ידוע";
+    }
+
+    const pills = document.createElement("div");
+    pills.className = "flex flex-wrap gap-1.5 mt-2";
+    for (const src of seg.source_ids) pills.appendChild(pill(src));
+    body.appendChild(pills);
+
     return el;
   }
 
@@ -564,19 +676,19 @@
       renderEmpty();
       return;
     }
+    const wrap = document.createElement("div");
+    wrap.className = "bg-surface-container-lowest rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] divide-y divide-outline-variant/60 overflow-hidden";
+    events.forEach((event, i) => wrap.appendChild(eventCard(event, i)));
+    results.appendChild(wrap);
 
-    const startH = hourFraction(fmt(structured.window.start));
-    const endH = hourFraction(fmt(structured.window.end));
-
-    const timeline = document.createElement("div");
-    timeline.className = "timeline";
-    const spineStops = [0, 0.25, 0.5, 0.75, 1]
-      .map((t) => colorForHour(startH + (endH - startH) * t))
-      .join(", ");
-    timeline.style.setProperty("--spine", `linear-gradient(to bottom, ${spineStops})`);
-
-    events.forEach((event, i) => timeline.appendChild(eventCard(event, i)));
-    results.appendChild(timeline);
+    const details = document.createElement("details");
+    details.className = "mt-1";
+    details.innerHTML = `<summary class="cursor-pointer text-label-sm font-label-sm text-secondary">פרטים טכניים (JSON)</summary>`;
+    const pre = document.createElement("pre");
+    pre.className = "mt-2 text-label-sm font-mono text-secondary bg-surface-container-lowest border border-outline-variant/60 rounded-xl p-3 max-h-80 overflow-auto whitespace-pre-wrap break-words";
+    pre.textContent = JSON.stringify(structured, null, 2);
+    details.appendChild(pre);
+    results.appendChild(details);
   }
 
   function updateDayArcRange(startTime, endTime) {
@@ -589,11 +701,34 @@
     dayarcRange.classList.add("visible");
   }
 
+  exportBtn.addEventListener("click", () => {
+    if (!lastResult) return;
+    const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${lastResult.scooter_id}_${lastResult.window.start.slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
   form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
+
+    const sourceIds = selectedSourceIds();
+    if (sourceIds.length === 0) {
+      clear(results);
+      statsRibbon.classList.add("hidden");
+      mapSection.classList.add("hidden");
+      renderError("יש לבחור לפחות מקור מידע אחד.");
+      return;
+    }
+
     submitBtn.disabled = true;
-    submitBtn.textContent = "משחזר…";
+    submitLabel.textContent = "משחזר…";
     clear(results);
+    statsRibbon.classList.add("hidden");
+    mapSection.classList.add("hidden");
 
     const startTime = document.getElementById("start_time").value;
     const endTime = document.getElementById("end_time").value;
@@ -604,6 +739,7 @@
       start_time: startTime,
       end_time: endTime,
       timezone: TIMEZONE,
+      source_ids: sourceIds,
     };
 
     try {
@@ -617,23 +753,18 @@
       if (!res.ok) {
         renderError(`הבקשה לא תקינה: ${data.detail || res.statusText}`);
       } else {
+        lastResult = data.structured;
+        exportBtn.disabled = false;
         updateDayArcRange(startTime, endTime);
+        renderStats(data.structured);
+        renderMap(data.structured);
         renderTimeline(data.structured);
-
-        const details = document.createElement("details");
-        details.className = "tech";
-        const summary = document.createElement("summary");
-        summary.textContent = "פרטים טכניים (JSON)";
-        const pre = document.createElement("pre");
-        pre.textContent = JSON.stringify(data.structured, null, 2);
-        details.append(summary, pre);
-        results.appendChild(details);
       }
     } catch (err) {
       renderError(`לא הצלחנו להתחבר לשרת. ודאו שהשרת פעיל ונסו שוב. (${err.message})`);
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = "שחזר ציר זמן";
+      submitLabel.textContent = "שחזר ציר זמן";
     }
   });
 </script>

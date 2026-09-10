@@ -34,7 +34,11 @@ that fact is explicitly present in the input.
 5. Do not state or imply more certainty than the data supports.
 6. After every timeline line, append the source tag exactly as given, \
 formatted as (SOURCE_ID) — do not explain what the source is.
-7. Output must be Hebrew, chronologically ordered, one line per event.
+7. A "contact" event is a customer call or message about the scooter. State \
+only its channel (call/message) and its summary text exactly as given. \
+Never treat it as a location fact, and never connect it to a nearby segment \
+or use it to explain a gap unless the data explicitly links them.
+8. Output must be Hebrew, chronologically ordered, one line per event.
 """
 
 
@@ -76,6 +80,18 @@ def build_structured_facts(result: AnalysisResult) -> list[dict[str, Any]]:
                     }
                     for o in conflict.observations
                 ],
+            }
+        )
+
+    for contact in result.customer_contacts:
+        events.append(
+            {
+                "type": "contact",
+                "start": _fmt(contact.time),
+                "end": _fmt(contact.time),
+                "channel": contact.channel.value,
+                "summary": contact.summary,
+                "sources": [contact.source_id],
             }
         )
 

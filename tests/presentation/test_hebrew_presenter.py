@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta, timezone
 
 from day_unfolded.domain.common import TimeWindow
+from day_unfolded.domain.contact import ContactChannel, CustomerContactEvent
 from day_unfolded.domain.result import AnalysisResult
 from day_unfolded.domain.timeline import (
     Conflict,
@@ -106,3 +107,36 @@ def test_provider_response_is_returned_verbatim():
     provider = FakeLLMProvider(response="09:00–10:00 — שהה באזור תל אביב (DB_X)")
     result = present_in_hebrew(_sample_result(), provider)
     assert result == provider.response
+
+
+def _result_with_contact() -> AnalysisResult:
+    window = TimeWindow(start=T0, end=T0 + timedelta(hours=3))
+    contact = CustomerContactEvent(
+        scooter_id="p1",
+        time=T0 + timedelta(minutes=30),
+        channel=ContactChannel.CALL,
+        summary="customer reported a flat tire",
+        source_id="DB_CALLS",
+        source_record_ref="call-1",
+    )
+    return AnalysisResult(scooter_id="p1", window=window, customer_contacts=[contact])
+
+
+def test_contact_event_is_included_in_structured_facts():
+    provider = FakeLLMProvider()
+    present_in_hebrew(_result_with_contact(), provider)
+    _, user_prompt = provider.calls[0]
+
+    events = json.loads(user_prompt)["events"]
+    assert len(events) == 1
+    assert events[0]["type"] == "contact"
+    assert events[0]["channel"] == "call"
+    assert events[0]["summary"] == "customer reported a flat tire"
+    assert events[0]["sources"] == ["DB_CALLS"]
+
+
+def test_system_prompt_mentions_contact_events():
+    provider = FakeLLMProvider()
+    present_in_hebrew(_result_with_contact(), provider)
+    system_prompt, _ = provider.calls[0]
+    assert "contact" in system_prompt.lower()

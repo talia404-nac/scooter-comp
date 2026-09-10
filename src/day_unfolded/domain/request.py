@@ -24,6 +24,12 @@ class AnalysisRequest(BaseModel):
         "invalid range" indistinguishable from "overnight range" for the caller.
     timezone: IANA timezone name (e.g. "Asia/Jerusalem"). Never assumed/defaulted —
         source timestamps and the requested window must agree on timezone semantics.
+    source_ids: which registered sources to query. None means "all registered
+        sources" (the default, preserving prior behavior). An explicit empty
+        list is rejected — that's almost certainly a caller mistake, not an
+        intentional "query nothing". Membership against the actual registry
+        is checked by the caller (the registry isn't known here), not by this
+        model.
     """
 
     scooter_id: str
@@ -32,12 +38,26 @@ class AnalysisRequest(BaseModel):
     end_date: date_ | None = None
     end_time: time_
     timezone: str
+    source_ids: list[str] | None = None
 
     @field_validator("scooter_id")
     @classmethod
     def _scooter_id_not_blank(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("scooter_id must not be blank")
+        return v
+
+    @field_validator("source_ids")
+    @classmethod
+    def _source_ids_valid(cls, v: list[str] | None) -> list[str] | None:
+        if v is None:
+            return v
+        if not v:
+            raise ValueError("source_ids, if provided, must not be empty — omit it to query all sources")
+        if any(not sid or not sid.strip() for sid in v):
+            raise ValueError("source_ids must not contain blank entries")
+        if len(set(v)) != len(v):
+            raise ValueError("source_ids must not contain duplicates")
         return v
 
     @field_validator("timezone")

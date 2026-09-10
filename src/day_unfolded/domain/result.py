@@ -12,6 +12,7 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 from day_unfolded.domain.common import TimeWindow
+from day_unfolded.domain.contact import CustomerContactEvent
 from day_unfolded.domain.observation import LocationObservation
 from day_unfolded.domain.timeline import (
     Anomaly,
@@ -50,5 +51,10 @@ class AnalysisResult(BaseModel):
     anomalies: list[Anomaly] = Field(default_factory=list)
     duplicates: list[DuplicateGroup] = Field(default_factory=list)
     corroborations: list[CorroborationGroup] = Field(default_factory=list)
+
+    # Customer calls/messages about the scooter. Not location facts — never
+    # touched by segmentation/gap/conflict analysis, only carried through for
+    # presentation alongside the location timeline.
+    customer_contacts: list[CustomerContactEvent] = Field(default_factory=list)
 
     source_statuses: list[SourceStatus] = Field(default_factory=list)
